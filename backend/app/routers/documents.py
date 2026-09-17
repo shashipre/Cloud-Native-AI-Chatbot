@@ -66,3 +66,28 @@ def get_documents(
     current_user: models.User = Depends(auth.get_current_user)
 ):
     return db.query(models.Document).filter(models.Document.user_id == current_user.id).all()
+
+@router.delete("/{document_id}", status_code=status.HTTP_200_OK)
+def delete_document(
+    document_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    doc = db.query(models.Document).filter(
+        models.Document.id == document_id,
+        models.Document.user_id == current_user.id
+    ).first()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # 1. Delete from S3
+    if doc.s3_key:
+        s3.delete_file_from_s3(doc.s3_key)
+
+    # 2. Delete from DB (chunks cascade-deleted automatically)
+    db.delete(doc)
+    db.commit()
+
+    return {"message": "Document deleted successfully", "id": document_id}
+

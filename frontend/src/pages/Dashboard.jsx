@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FileUp, File, MessageSquare } from 'lucide-react';
+import { FileUp, File, MessageSquare, Trash2 } from 'lucide-react';
 
 const Dashboard = () => {
   const [documents, setDocuments] = useState([]);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const { logout } = useAuth();
 
   const fetchDocuments = async () => {
@@ -42,6 +43,21 @@ const Dashboard = () => {
       alert('Failed to upload document');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDelete = async (id, filename) => {
+    if (!window.confirm(`Are you sure you want to delete "${filename}"?`)) return;
+
+    setDeletingId(id);
+    try {
+      await api.delete(`/documents/${id}`);
+      setDocuments((prev) => prev.filter((doc) => doc.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete document');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -90,14 +106,24 @@ const Dashboard = () => {
                 <li key={doc.id} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
                   <div className="flex items-center gap-3">
                     <File size={18} className="text-blue-400" />
-                    <span>{doc.filename}</span>
+                    <span className="truncate max-w-md">{doc.filename}</span>
                   </div>
-                  <span className={`text-sm px-2 py-1 rounded-full ${
-                    doc.status === 'ready' ? 'bg-green-900 text-green-300' : 
-                    doc.status === 'error' ? 'bg-red-900 text-red-300' : 'bg-yellow-900 text-yellow-300'
-                  }`}>
-                    {doc.status}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-sm px-2 py-1 rounded-full ${
+                      doc.status === 'ready' ? 'bg-green-900 text-green-300' : 
+                      doc.status === 'error' ? 'bg-red-900 text-red-300' : 'bg-yellow-900 text-yellow-300'
+                    }`}>
+                      {doc.status}
+                    </span>
+                    <button
+                      onClick={() => handleDelete(doc.id, doc.filename)}
+                      disabled={deletingId === doc.id}
+                      title="Delete document"
+                      className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-600 rounded-md transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -109,3 +135,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+

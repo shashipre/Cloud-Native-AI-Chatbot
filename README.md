@@ -81,6 +81,7 @@ npm run dev
 | GET | `/auth/me` | Get current user |
 | POST | `/documents/upload` | Upload a document |
 | GET | `/documents/` | List user's documents |
+| DELETE | `/documents/{id}` | Delete a document and its chunks |
 | POST | `/conversations` | Create conversation |
 | GET | `/conversations` | List conversations |
 | POST | `/conversations/{id}/messages` | Send message, get AI response |

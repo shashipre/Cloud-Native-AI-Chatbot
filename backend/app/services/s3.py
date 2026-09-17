@@ -36,3 +36,20 @@ def upload_file_to_s3(file_content: bytes, filename: str, s3_key: str) -> str:
     except ClientError as e:
         logger.error(e)
         return ""
+
+def delete_file_from_s3(s3_key: str) -> bool:
+    """Delete a file from S3 bucket."""
+    s3_client = get_s3_client()
+    if not s3_client:
+        logger.warning(f"Simulating S3 delete for {s3_key}")
+        return True
+
+    try:
+        s3_client.delete_object(
+            Bucket=settings.s3_bucket_name,
+            Key=s3_key
+        )
+        return True
+    except ClientError as e:
+        logger.error(f"Error deleting from S3: {e}")
+        return False
